@@ -57,24 +57,32 @@ rule MAL_COMPROMISED_HERMETICA_CERT  {
 }
 
 rule MAL_ISSAC_WIPER {
-    meta:
-      desc = "Issac Wiper - broad hunting rule"
-      author = "Hegel @ SentinelLabs"
-      version = "1.0"
-      last_modified = "03.01.2022"
-      hash = "13037b749aa4b1eda538fda26d6ac41c8f7b1d02d83f47b0d187dd645154e033"
-      reference = "https://www.welivesecurity.com/2022/03/01/isaacwiper-hermeticwizard-wiper-worm-targeting-ukraine/"
-    strings:
-        $name1 = "Cleaner.dll" wide ascii
-        $name2 = "cl.exe" wide ascii nocase
-        $name3 = "cl64.dll" wide ascii nocase
-        $name4 = "cld.dll" wide ascii nocase
-        $name5 = "cll.dll" wide ascii nocase
-        $name6 = "Cleaner.exe" wide ascii
-        $export = "_Start@4" wide ascii
-    condition:
-      uint16(0) == 0x5A4D and
-      (any of ($name*) and $export)
+  meta:
+    desc = "Issac Wiper - broad hunting rule"
+    author = "Hegel @ SentinelLabs"
+    version = "2.0"
+    last_modified = "03.15.2022"
+    reference = "https://www.welivesecurity.com/2022/03/01/isaacwiper-hermeticwizard-wiper-worm-targeting-ukraine/"
+  strings:
+    $full_name1 = "Cleaner.dll" ascii wide
+    $full_name2 = "Cleaner.exe" ascii wide    
+
+    $log1 = "getting drives…" ascii wide fullword
+    $log2 = "start erasing physical drives…" ascii wide
+    $log3 = "–– start erasing logical drive" ascii wide
+    $log4 = "start erasing system physical drive…" ascii wide
+    $log5 = "system physical drive –– FAILED" ascii wide
+    $log6 = "start erasing system logical drive" ascii wide
+  condition:
+    uint16(0) == 23117 
+    and 
+    pe.exports("_Start@4")
+    and
+    (
+      any of ($full_name*)
+      or
+      3 of ($log*)
+    )
 }
 
 rule MAL_HERMETIC_WIZARD {
